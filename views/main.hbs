@@ -1,0 +1,123 @@
+<div class="container">
+  <script>
+    const margin = 5;
+    let onGrill = []; // keep track of what's added for further calculations
+    let xMax = margin;
+    let yMax = margin;
+    let grillDimension = { width: 0, height: 0 }
+
+    function onSubmit(e) { // function triggered when button is clicked with valid JSON
+      try {
+        const data = JSON.parse($('#grill_data').val().replace(/\s/g, ''))
+        main(data.grill);
+      } catch (e) {
+        alert("Invalid JSON")
+      }
+    }
+
+    const main = (grill) => {
+      // The start of the main logical code
+      const svg = $("#grill");
+      svg.attr("width", grill.width);
+      svg.attr("height", grill.height);
+
+      grillDimension.width = grill.width;
+      grillDimension.height = grill.height;
+
+      //Flush out any previous data
+      svg.empty();
+      $("#grill-out").empty();
+      onGrill = [];
+      xMax = margin;
+      yMax = margin;
+      // sort big items first to have compact spaces
+      grill.grillItems.sort((a, b) => (b.width * b.height) - (a.width * a.height)).forEach((grillItem) => { // Adding each item to grill
+        addOnGrill(grillItem);
+      })
+    }
+
+    const addOnGrill = (grillItem) => { // Function to add item on the grill
+      if (!grillItem) return;
+
+      const { width, height, title } = grillItem;
+
+      if (xMax + width > grillDimension.width) { // if row is full switch to offset height of the max container
+        const maxHeight = Math.max(...onGrill.map(item => item.height));
+        yMax = margin + maxHeight + margin;
+        xMax = margin;
+        return addOnGrill(grillItem) // recalculate the validity
+      }
+
+      if (yMax + height > grillDimension.height) { // condition where height is exceeding the container
+        return setAside(grillItem)
+      }
+
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+
+      rect.setAttribute("width", width)
+      rect.setAttribute("height", width)
+      rect.setAttribute("x", xMax);
+      rect.setAttribute("y", yMax);
+      rect.setAttribute("fill", "green");
+
+      xMax = xMax + width + margin; // move the x position after the item's width
+
+      $("#grill").append(rect)
+      onGrill.push(grillItem);
+    }
+
+    const setAside = (grillItem) => { // Items that are not fitting inside the grill
+
+      const tr = document.createElement("tr");
+      const index = document.createElement("td");
+      index.innerText = $("#grill-out").children().length + 1
+
+      const title = document.createElement("td");
+      title.innerText = grillItem.title;
+
+      const width = document.createElement("td");
+      width.innerText = grillItem.width;
+
+      const height = document.createElement("td");
+      height.innerText = grillItem.height;
+
+      tr.appendChild(index);
+      tr.appendChild(title);
+      tr.appendChild(width);
+      tr.appendChild(height);
+
+      $("#grill-out").append(tr)
+    }
+
+  </script>
+  <div class="row">
+    <div class="col">
+      <svg xmlns="http://www.w3.org/2000/svg" id="grill" style="background-color: rgb(221, 217, 217);">
+      </svg>
+    </div>
+    <div class="col">
+      <div class="item-table-container">
+        <h5 style="background-color: #e9e9e9; padding:10px">Items out of grill</h5>
+        <table class="table table-hover table-responsive">
+          <thead>
+            <tr>
+              <th>Sr No.</th>
+              <th>Title</th>
+              <th>Width</th>
+              <th>Height</th>
+            </tr>
+          </thead>
+          <tbody id="grill-out">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col">
+      <textarea id="grill_data" name="grill_data" cols="80" rows="10"></textarea>
+      <button id="data-submit" onclick="onSubmit()">Submit data</button>
+    </div>
+    <div class="col"></div>
+  </div>
+</div>
